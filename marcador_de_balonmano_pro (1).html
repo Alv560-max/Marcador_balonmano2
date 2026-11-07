@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full w-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0f172a">
+  <title>Marcador de Balonmano Pro</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Custom Fonts for Sports Display -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Inter:wght@400;600;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            score: ['Teko', 'sans-serif'],
+            display: ['Chakra Petch', 'sans-serif'],
+          },
+          colors: {
+            teamRed: '#dc2626',
+            teamBlue: '#2563eb',
+            teamYellow: '#eab308',
+            teamGreen: '#16a34a',
+            teamPurple: '#9333ea',
+            teamOrange: '#ea580c',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      overflow: hidden;
+      background-color: #0f172a;
+    }
+
+    .score-text {
+      text-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    @media orientation: portrait {
+      #portrait-warning {
+        display: flex !important;
+      }
+    }
+
+    @keyframes timerPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .timer-colon-active {
+      animation: timerPulse 1s infinite;
+    }
+
+    /* Custom Scrollbar for list modals */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(51, 65, 85, 0.8);
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body class="h-full w-full select-none font-sans text-white bg-slate-950 flex flex-col justify-between overflow-hidden">
+
+  <!-- Portrait Warning Modal -->
+  <div id="portrait-warning" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 hidden flex-col items-center justify-center p-6 text-center text-white">
+    <div class="animate-bounce mb-4 text-amber-400">
+      <svg class="w-20 h-20 mx-auto stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+      </svg>
+    </div>
+    <h2 class="text-2xl font-bold font-display uppercase tracking-wider mb-2">Gira tu teléfono</h2>
+    <p class="text-slate-400 max-w-xs text-sm">Este marcador está diseñado para utilizarse en <strong>modo horizontal</strong>.</p>
+  </div>
+
+  <!-- MAIN HANDBALL SCOREBOARD CONTAINER -->
+  <div id="scoreboard-container" class="relative flex-1 flex w-full h-full overflow-hidden">
+    
+    <!-- LEFT TEAM HALF -->
+    <div id="team-left-bg" class="relative flex-1 flex flex-col justify-center items-center h-full transition-colors duration-300 bg-teamRed cursor-pointer" onclick="handleHalfClick('left', event)">
+      <!-- Left Team Header -->
+      <div class="absolute top-2 left-14 sm:left-16 flex items-center gap-2 z-10 bg-black/40 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10 max-w-[45%]">
+        <img id="team-left-shield" class="w-6 h-6 sm:w-8 sm:h-8 object-contain rounded-full shadow-md shrink-0 bg-black/20">
+        <span id="team-left-name" class="font-display font-bold text-xs sm:text-base md:text-lg tracking-wide truncate max-w-[120px] sm:max-w-[180px]">Coslada</span>
+      </div>
+
+      <!-- Left Goals Score Display -->
+      <div class="flex flex-col items-center justify-center pointer-events-none mt-4">
+        <span id="team-left-score" class="font-score text-[110px] sm:text-[150px] md:text-[200px] leading-none font-bold text-white score-text">0</span>
+      </div>
+
+      <!-- Left Quick Decrement (-1 Goal) Button -->
+      <button onclick="decrementGoal('left', event)" class="absolute bottom-12 left-4 z-20 bg-black/40 hover:bg-black/60 text-white p-2.5 rounded-full backdrop-blur-sm transition border border-white/10 shadow-lg active:scale-95" title="Restar 1 gol">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- CENTER DIVIDING LINE -->
+    <div class="w-[3px] bg-slate-900/60 backdrop-blur-sm h-full z-20 shadow-2xl relative">
+      <div class="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-white/30"></div>
+    </div>
+
+    <!-- RIGHT TEAM HALF -->
+    <div id="team-right-bg" class="relative flex-1 flex flex-col justify-center items-center h-full transition-colors duration-300 bg-teamBlue cursor-pointer" onclick="handleHalfClick('right', event)">
+      <!-- Right Team Header -->
+      <div class="absolute top-2 right-14 sm:right-16 flex items-center gap-2 z-10 bg-black/40 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10 max-w-[45%] flex-row-reverse">
+        <img id="team-right-shield" class="w-6 h-6 sm:w-8 sm:h-8 object-contain rounded-full shadow-md shrink-0 bg-black/20">
+        <span id="team-right-name" class="font-display font-bold text-xs sm:text-base md:text-lg tracking-wide truncate max-w-[120px] sm:max-w-[180px]">VISITANTE</span>
+      </div>
+
+      <!-- Right Goals Score Display -->
+      <div class="flex flex-col items-center justify-center pointer-events-none mt-4">
+        <span id="team-right-score" class="font-score text-[110px] sm:text-[150px] md:text-[200px] leading-none font-bold text-white score-text">0</span>
+      </div>
+
+      <!-- Right Quick Decrement (-1 Goal) Button -->
+      <button onclick="decrementGoal('right', event)" class="absolute bottom-12 right-4 z-20 bg-black/40 hover:bg-black/60 text-white p-2.5 rounded-full backdrop-blur-sm transition border border-white/10 shadow-lg active:scale-95" title="Restar 1 gol">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- FLOATING LOCK / UNLOCK BUTTON -->
+    <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+      <button id="btn-lock" onclick="toggleLock()" class="p-2 bg-slate-900/90 border border-slate-700 hover:border-amber-500/50 text-slate-300 hover:text-amber-400 rounded-full transition active:scale-95 shadow-2xl backdrop-blur-md" title="Bloquear/Desbloquear pantalla">
+        <svg id="icon-unlocked" class="w-4 h-4 fill-current text-slate-400" viewBox="0 0 24 24">
+          <path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/>
+        </svg>
+        <svg id="icon-locked" class="w-4 h-4 fill-current text-amber-400 hidden" viewBox="0 0 24 24">
+          <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- TOP OVERLAY: Edit Left Team -->
+    <button onclick="openTeamModal('left')" class="absolute top-2 left-2 z-30 p-2 bg-slate-900/80 hover:bg-slate-900 text-white rounded-xl shadow-lg border border-white/20 active:scale-90 transition backdrop-blur-md" title="Editar Equipo Izquierdo">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+      </svg>
+    </button>
+
+    <!-- TOP OVERLAY: Edit Right Team -->
+    <button onclick="openTeamModal('right')" class="absolute top-2 right-2 z-30 p-2 bg-slate-900/80 hover:bg-slate-900 text-white rounded-xl shadow-lg border border-white/20 active:scale-90 transition backdrop-blur-md" title="Editar Equipo Derecho">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+      </svg>
+    </button>
+
+    <!-- TOP CENTER: TIMER MODULE -->
+    <div class="absolute top-2 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5">
+      <div class="flex items-center bg-slate-900/90 border border-slate-700 rounded-2xl shadow-2xl backdrop-blur-lg p-1">
+        <button id="btn-timer-toggle" onclick="toggleTimer()" class="p-1.5 sm:px-2.5 text-emerald-400 hover:text-emerald-300 hover:bg-white/10 rounded-xl transition active:scale-90 flex items-center justify-center">
+          <svg id="icon-timer-play" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="icon-timer-pause" class="w-4 h-4 fill-current hidden" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+
+        <div class="px-2.5 py-0.5 font-score text-xl sm:text-2xl tracking-wider text-amber-400 font-bold min-w-[75px] text-center border-x border-slate-700/60">
+          <span id="timer-display">30:00</span>
+        </div>
+
+        <button onclick="openTimerModal()" class="p-1.5 sm:px-2.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition active:scale-90 flex items-center justify-center" title="Ajustar tiempo">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- PERIOD BUTTON: LARGER SIZE -->
+      <button onclick="incrementPeriod()" class="bg-slate-900/95 hover:bg-slate-800 border-2 border-amber-500/50 text-amber-400 font-display font-bold text-sm sm:text-base px-4 py-1.5 rounded-full shadow-2xl backdrop-blur-md transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+        <span class="text-slate-300 font-normal">T:</span>
+        <span id="period-display" class="tracking-wider font-extrabold text-amber-400">1/2</span>
+      </button>
+    </div>
+
+    <!-- LOCK SCREEN OVERLAY BANNER -->
+    <div id="lock-banner" class="absolute top-14 left-1/2 -translate-x-1/2 z-20 hidden bg-amber-500/90 text-slate-950 font-bold px-3 py-0.5 rounded-full text-[10px] uppercase tracking-widest backdrop-blur-md shadow-lg pointer-events-none flex items-center gap-1 animate-pulse">
+      <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+      Marcador Bloqueado
+    </div>
+
+  </div>
+
+  <!-- RESTRUCTURED BOTTOM TOOLBAR -->
+  <footer class="relative z-30 bg-slate-900/95 border-t border-slate-800 text-slate-300 px-3 py-1.5 flex items-center justify-between shadow-2xl backdrop-blur-md">
+    
+    <!-- LEFT GROUP: PLAYER GOALS & ASSISTS (PLAYER NAME IN THE MIDDLE, WIDER BUTTONS) -->
+    <div class="flex items-center gap-2 bg-slate-800/90 border border-slate-700/80 px-2.5 py-1 rounded-2xl shadow-inner">
+      
+      <!-- Goles Controls (Wider +/- Buttons) -->
+      <div class="flex items-center gap-1 bg-slate-900 px-2 py-0.5 rounded-xl border border-slate-700">
+        <span class="text-[10px] font-bold text-slate-400 uppercase mr-0.5">Gol</span>
+        <button onclick="changePlayerStat('goals', -1)" class="w-8 h-6 bg-slate-800 hover:bg-slate-700 text-rose-400 font-extrabold text-base rounded-lg flex items-center justify-center active:scale-90 shadow-sm">-</button>
+        <span id="player-goals-display" class="font-score text-lg font-bold text-white min-w-[18px] text-center leading-none">0</span>
+        <button onclick="changePlayerStat('goals', 1)" class="w-8 h-6 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-extrabold text-base rounded-lg flex items-center justify-center active:scale-90 shadow-sm">+</button>
+      </div>
+
+      <!-- Player Name IN THE MIDDLE with Edit Pencil -->
+      <div class="flex items-center gap-1 px-1 border-x border-slate-700/80">
+        <span id="player-name-display" class="text-xs font-bold text-amber-400 truncate max-w-[85px]">Yaiza</span>
+        <button onclick="openPlayerNameModal()" class="p-1 text-slate-400 hover:text-amber-400 transition" title="Editar nombre de la jugadora">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Asistencias Controls (Wider +/- Buttons) -->
+      <div class="flex items-center gap-1 bg-slate-900 px-2 py-0.5 rounded-xl border border-slate-700">
+        <span class="text-[10px] font-bold text-slate-400 uppercase mr-0.5">Asis</span>
+        <button onclick="changePlayerStat('assists', -1)" class="w-8 h-6 bg-slate-800 hover:bg-slate-700 text-rose-400 font-extrabold text-base rounded-lg flex items-center justify-center active:scale-90 shadow-sm">-</button>
+        <span id="player-assists-display" class="font-score text-lg font-bold text-cyan-400 min-w-[18px] text-center leading-none">0</span>
+        <button onclick="changePlayerStat('assists', 1)" class="w-8 h-6 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-extrabold text-base rounded-lg flex items-center justify-center active:scale-90 shadow-sm">+</button>
+      </div>
+
+    </div>
+
+    <!-- CENTER BUTTON: MENÚ (Exactly Centered Horizontally) -->
+    <div class="absolute left-1/2 -translate-x-1/2 pointer-events-auto">
+      <button onclick="openMenuModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-display font-bold px-4 sm:px-6 py-2 rounded-2xl text-sm sm:text-base tracking-wider uppercase flex items-center gap-1.5 shadow-lg shadow-amber-500/20 active:scale-95 transition">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+        <span>MENÚ</span>
+      </button>
+    </div>
+
+    <!-- RIGHT GROUP: GUARDAR & REINICIAR (EQUAL DISTANCE TO MENU AND EACH OTHER) -->
+    <div class="flex items-center gap-4 sm:gap-6">
+      <!-- Guardar Partido Button -->
+      <button onclick="saveCurrentMatch()" class="bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/40 font-bold py-2 px-3 rounded-xl text-xs flex items-center gap-1.5 transition active:scale-95 shadow-md">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+        </svg>
+        <span class="hidden sm:inline">Guardar</span>
+      </button>
+
+      <!-- Reiniciar Marcador Button -->
+      <button onclick="confirmReset()" class="bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 border border-rose-500/40 font-bold py-2 px-3 rounded-xl text-xs flex items-center gap-1.5 transition active:scale-95 shadow-md" title="Reiniciar Marcador">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span class="hidden sm:inline">Reiniciar</span>
+      </button>
+    </div>
+
+  </footer>
+
+  <!-- MODAL: MAIN NAVIGATION MENU -->
+  <div id="modal-menu" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-sm w-full shadow-2xl text-white">
+      <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+        <h3 class="text-lg font-bold font-display text-amber-400 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+          Menú Principal
+        </h3>
+        <button onclick="closeModal('modal-menu')" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Navigation Grid Buttons -->
+      <div class="grid grid-cols-1 gap-2.5">
+        <!-- 1. Partidos -->
+        <button onclick="closeModal('modal-menu'); openMatchesModal();" class="flex items-center gap-3 p-3 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 rounded-2xl text-left transition active:scale-98">
+          <div class="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          </div>
+          <div>
+            <div class="font-bold text-sm text-slate-100">Partidos Guardados</div>
+            <div class="text-[11px] text-slate-400">Ver historial de partidos y cronología</div>
+          </div>
+        </button>
+
+        <!-- 2. Clasificación -->
+        <button onclick="closeModal('modal-menu'); openClassificationModal();" class="flex items-center gap-3 p-3 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 rounded-2xl text-left transition active:scale-98">
+          <div class="p-2.5 bg-indigo-500/10 text-indigo-400 rounded-xl">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <div>
+            <div class="font-bold text-sm text-slate-100">Clasificación</div>
+            <div class="text-[11px] text-slate-400">Tabla de posiciones (2 pts por victoria)</div>
+          </div>
+        </button>
+
+        <!-- 3. Estadísticas -->
+        <button onclick="closeModal('modal-menu'); openStatsModal();" class="flex items-center gap-3 p-3 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 rounded-2xl text-left transition active:scale-98">
+          <div class="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          </div>
+          <div>
+            <div class="font-bold text-sm text-slate-100">Estadísticas de Liga</div>
+            <div class="text-[11px] text-slate-400">Datos grupales e individuales</div>
+          </div>
+        </button>
+
+        <!-- 4. Ligas -->
+        <button onclick="closeModal('modal-menu'); openLeaguesMenuModal();" class="flex items-center gap-3 p-3 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 rounded-2xl text-left transition active:scale-98">
+          <div class="p-2.5 bg-rose-500/10 text-rose-400 rounded-xl">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          </div>
+          <div>
+            <div class="font-bold text-sm text-slate-100">Gestión de Ligas</div>
+            <div class="text-[11px] text-slate-400">Guardar liga actual y ver anteriores</div>
+          </div>
+        </button>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end">
+        <button onclick="closeModal('modal-menu')" class="bg-slate-800 px-4 py-1.5 rounded-xl text-xs text-slate-300 font-medium">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL: PARTIDOS GUARDADOS -->
+  <div id="modal-matches" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl text-white">
+      <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2">
+        <h3 class="text-base font-bold font-display text-amber-400 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          Partidos Guardados
+        </h3>
+        <button onclick="closeModal('modal-matches')" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Matches List Container -->
+      <div id="matches-list" class="flex-1 overflow-y-auto space-y-2.5 pr-1 my-2">
+        <!-- Rendered via JS -->
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 flex justify-between items-center">
+        <button onclick="clearAllMatches()" class="text-xs text-rose-400 hover:text-rose-300 underline">Borrar historial</button>
+        <button onclick="closeModal('modal-matches')" class="bg-slate-800 hover:bg-slate-700 px-4 py-1.5 rounded-xl text-xs font-medium">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL: MATCH TIMELINE DETAILED VIEW -->
+  <div id="modal-match-timeline" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 max-w-sm w-full max-h-[85vh] flex flex-col shadow-2xl text-white">
+      <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2">
+        <h3 class="text-sm font-bold font-display text-amber-400 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Cronología de Goles
+        </h3>
+        <button onclick="closeModal('modal-match-timeline')" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div id="timeline-match-header" class="mb-3 p-2 bg-slate-800/80 rounded-xl text-center text-xs">
+        <!-- Rendered via JS -->
+      </div>
+
+      <div id="timeline-events-container" class="flex-1 overflow-y-auto space-y-2 pr-1 my-1">
+        <!-- Rendered via JS -->
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 flex justify-end">
+        <button onclick="closeModal('modal-match-timeline')" class="bg-slate-800 hover:bg-slate-700 px-4 py-1.5 rounded-xl text-xs">Volver</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL: CLASIFICACIÓN -->
+  <div id="modal-classification" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl text-white">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
+        <h3 class="text-base font-bold font-display text-indigo-400 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          Clasificación de la Liga
+        </h3>
+        <button onclick="closeModal('modal-classification')" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <button onclick="openAddClasTeamModal()" class="mb-3 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md transition active:scale-95">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        <span>Añadir Equipo a la Clasificación</span>
+      </button>
+
+      <div class="flex-1 overflow-y-auto pr-1 my-1">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="text-slate-400 border-b border-slate-800 uppercase text-[10px] tracking-wider">
+              <th class="py-2 px-1 text-center w-5">#</th>
+              <th class="py-2 px-2">Equipo</th>
+              <th class="py-2 px-1 text-center">PG</th>
+              <th class="py-2 px-1 text-center">PE</th>
+              <th class="py-2 px-1 text-center">PP</th>
+              <th class="py-2 px-1 text-center font-bold text-amber-400">Pts</th>
+              <th class="py-2 px-1 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="classification-table-body" class="divide-y divide-slate-800/60 font-medium">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 flex justify-between items-center text-[10px] text-slate-400">
+        <span>* Sistema de puntuación: PG = 2 pts, PE = 1 pt</span>
+        <button onclick="closeModal('modal-classification')" class="bg-slate-800 hover:bg-slate-700 px-4 py-1.5 rounded-xl text-xs font-medium text-white">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL: ESTADÍSTICAS -->
+  <div id="modal-stats" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 max-w-md w-full max-h-[90vh] flex flex-col shadow-2xl text-white">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
+        <h3 class="text-base font-bold font-display text-emerald-400 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Estadísticas de la Liga
+        </h3>
+        <button onclick="closeModal('modal-stats')" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-4 pr-1 my-1">
+        <!-- 1. Estadísticas Grupales -->
+        <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3 shadow-md">
+          <div class="text-xs uppercase font-bold text-emerald-400 mb-2 border-b border-slate-700/60 pb-1 flex items-center gap-1.5">
+            <span>⚽ Estadísticas Grupales (Equipo Local)</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="bg-slate-900 p-2 rounded-xl">
+              <span class="text-slate-400 text-[10px] block">Goles Totales Marcados</span>
+              <span id="stat-group-goals-for" class="text-lg font-bold font-score text-white">0</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded-xl">
+              <span class="text-slate-400 text-[10px] block">Goles Totales Encajados</span>
+              <span id="stat-group-goals-against" class="text-lg font-bold font-score text-rose-400">0</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded-xl">
+              <span class="text-slate-400 text-[10px] block">Media Goles Marcados/Partido</span>
+              <span id="stat-group-avg-for" class="text-base font-bold text-amber-400">0.0</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded-xl">
+              <span class="text-slate-400 text-[10px] block">Media Goles Encajados/Partido</span>
+              <span id="stat-group-avg-against" class="text-base font-bold text-amber-400">0.0</span>
+            </div>
+            <div class="col-span-2 bg-slate-900 p-2 rounded-xl flex justify-between items-center">
+              <span class="text-slate-400 text-[11px]">Diferencia de Goles</span>
+              <span id="stat-group-diff" class="text-base font-bold font-score text-cyan-400">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Estadísticas Individuales -->
+        <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3 shadow-md">
+          <div class="text-xs uppercase font-bold text-amber-400 mb-2 border-b border-slate-700/60 pb-1 flex items-center justify-between">
+            <span>👤 Estadísticas del Jugador</span>
+            <span id="stat-player-name-title" class="text-slate-300 font-bold">Yaiza</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="bg-slate-900 p-2 rounded-xl">
+              <span class="text-slate-400 text-[10px] block">Goles Marcados</span>
+              <span id="stat-indiv-goals" class="text-lg font-bold font-score text-emerald-400">0</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded-xl">
+              <span class="text-slate-400 text-[10px] block">Asistencias</span>
+              <span id="stat-indiv-assists" class="text-lg font-bold font-score text-cyan-400">0</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded-xl">
+              <span class="text-slate-400 text-[10px] block">Media Goles / Partido</span>
+              <span id="stat-indiv-avg-goals" class="text-base font-bold text-amber-400">0.0</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded-xl">
+              <span class="text-slate-400 text-[10px] block">Media Asistencias / Partido</span>
+              <span id="stat-indiv-avg-assists" class="text-base font-bold text-amber-400">0.0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 flex justify-end">
+        <button onclick="closeModal('modal-stats')" class="bg-slate-800 hover:bg-slate-700 px-4 py-1.5 rounded-xl text-xs font-medium">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL: LEAGUES SUBMENU -->
+  <div id="modal-leagues-menu" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-xs w-full shadow-2xl text-white">
+      <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold font-display text-rose-400 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          Gestión de Ligas
+        </h3>
+        <button onclick="closeModal('modal-leagues-menu')" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <!-- Option 1: Guardar Liga -->
+        <button onclick="closeModal('modal-leagues-menu'); openSaveLeaguePrompt();" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg transition active:scale-95">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          <span>1. Guardar Liga Actual</span>
+        </button>
+
+        <!-- Option 2: Ligas Anteriores -->
+        <button onclick="closeModal('modal-leagues-menu'); openPastLeaguesModal();" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold py-3 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 transition active:scale-95">
+          <svg class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>2. Ligas Anteriores</span>
+        </button>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end">
+        <button onclick="closeModal('modal-leagues-menu')" class="bg-slate-800 hover:bg-slate-700 px-4 py-1.5 rounded-xl text-xs">Volver</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL: CONFIRM SAVE LEAGUE PROMPT -->
+  <div id="modal-save-league-prompt" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-xs w-full shadow-2xl text-white">
+      <h3 class="text-base font-bold font-display text-emerald-400 mb-1">Guardar Liga Actual</h3>
+      <p class="text-xs text-slate-400 mb-3">Se archivarán todos los partidos, clasificación y estadísticas de la liga actual.</p>
+
+      <div class="mb-4">
+        <label class="block text-xs uppercase font-bold text-slate-400 mb-1">Nombre de la Liga</label>
+        <input type="text" id="input-league-name" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500" placeholder="Ej. Liga 2025/2026">
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="closeModal('modal-save-league-prompt')" class="flex-1 bg-slate-800 hover:bg-slate-700 py-2 rounded-xl text-xs text-slate-300">Cancelar</button>
+        <button onclick="confirmSaveLeague()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 font-bold py-2 rounded-xl text-xs text-white">Confirmar y Archivar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL: LIST OF PAST LEAGUES -->
+  <div id="modal-past-leagues" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl text-white">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
+        <h3 class="text-base font-bold font-display text-amber-400 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          Ligas Anteriores Guardadas
+        </h3>
+        <button onclick="closeModal('modal-past-leagues')" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div id="past-leagues-list" class="flex-1 overflow-y-auto space-y-2 pr-1 my-1">
+        <!-- Rendered via JS -->
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 flex justify-end">
+        <button onclick="closeModal('modal-past-leagues')" class="bg-slate-800 hover:bg-slate-700 px-4 py-1.5 rounded-xl text-xs">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL: VIEW SPECIFIC PAST LEAGUE DETAILS -->
+  <div id="modal-past-league-detail" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl text-white">
+      <!-- Title Header -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h3 id="past-league-title" class="text-base font-bold font-display text-amber-400 truncate">Nombre de Liga</h3>
+        <button onclick="closeModal('modal-past-league-detail')" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 shrink-0">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="flex border-b border-slate-800 my-2 text-xs font-bold gap-1">
+        <button id="tab-past-stats-btn" onclick="switchPastLeagueTab('stats')" class="flex-1 py-2 text-center border-b-2 border-amber-400 text-amber-400">1. Estadísticas</button>
+        <button id="tab-past-clas-btn" onclick="switchPastLeagueTab('clas')" class="flex-1 py-2 text-center text-slate-400 border-b-2 border-transparent">2. Clasificación</button>
+        <button id="tab-past-matches-btn" onclick="switchPastLeagueTab('matches')" class="flex-1 py-2 text-center text-slate-400 border-b-2 border-transparent">3. Partidos</button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div id="past-league-tab-content" class="flex-1 overflow-y-auto pr-1 my-1">
+        <!-- Rendered via JS -->
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 flex justify-end">
+        <button onclick="closeModal('modal-past-league-detail')" class="bg-slate-800 hover:bg-slate-700 px-4 py-1.5 rounded-xl text-xs">Volver</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL: EDIT PLAYER NAME ONLY -->
+  <div id="modal-player-name" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 max-w-xs w-full shadow-2xl text-white">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
+        <h3 class="text-base font-bold font-display text-amber-400">Editar Nombre del Jugador</h3>
+        <button onclick="closeModal('modal-player-name')" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-xs uppercase font-bold text-slate-400 mb-1">Nombre de la Jugadora / Jugador</label>
+        <input type="text" id="input-player-name-only" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-amber-500" placeholder="Ej. Yaiza">
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="closeModal('modal-player-name')" class="flex-1 bg-slate-800 hover:bg-slate-700 py-2 rounded-xl text-xs text-slate-300">Cancelar</button>
+        <button onclick="savePlayerNameOnly()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 rounded-xl text-xs">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL: EDIT TEAM DETAILS -->
+  <div id="modal-team" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-sm w-full shadow-2xl text-white">
+      <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+        <h3 id="modal-team-title" class="text-lg font-bold font-display text-amber-400">Editar Equipo</h3>
+        <button onclick="closeModal('modal-team')" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-xs uppercase font-bold text-slate-400 mb-1">Nombre del Equipo</label>
+        <input type="text" id="input-team-name" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-medium focus:outline-none focus:border-amber-500 disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Ej. BM Madrid">
+        <p id="team-name-disabled-msg" class="text-[10px] text-amber-400/80 mt-1 hidden">El nombre del equipo Coslada es fijo y no se puede editar.</p>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-xs uppercase font-bold text-slate-400 mb-2">Color del Fondo</label>
+        <div class="grid grid-cols-6 gap-2">
+          <button type="button" onclick="selectColor('#dc2626')" class="color-btn w-full aspect-square rounded-xl bg-red-600 border-2 border-transparent hover:scale-105 transition" data-color="#dc2626"></button>
+          <button type="button" onclick="selectColor('#2563eb')" class="color-btn w-full aspect-square rounded-xl bg-blue-600 border-2 border-transparent hover:scale-105 transition" data-color="#2563eb"></button>
+          <button type="button" onclick="selectColor('#eab308')" class="color-btn w-full aspect-square rounded-xl bg-yellow-500 border-2 border-transparent hover:scale-105 transition" data-color="#eab308"></button>
+          <button type="button" onclick="selectColor('#16a34a')" class="color-btn w-full aspect-square rounded-xl bg-green-600 border-2 border-transparent hover:scale-105 transition" data-color="#16a34a"></button>
+          <button type="button" onclick="selectColor('#9333ea')" class="color-btn w-full aspect-square rounded-xl bg-purple-600 border-2 border-transparent hover:scale-105 transition" data-color="#9333ea"></button>
+          <button type="button" onclick="selectColor('#ea580c')" class="color-btn w-full aspect-square rounded-xl bg-orange-600 border-2 border-transparent hover:scale-105 transition" data-color="#ea580c"></button>
+        </div>
+      </div>
+
+      <div class="mb-5">
+        <label class="block text-xs uppercase font-bold text-slate-400 mb-1">Escudo / Logo (Opcional)</label>
+        <div class="flex items-center gap-3">
+          <img id="modal-shield-preview" class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 object-contain p-0.5">
+          <label class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs py-2.5 px-3 rounded-xl cursor-pointer text-center font-medium transition">
+            <span>Cambiar imagen</span>
+            <input type="file" id="input-team-shield" accept="image/*" class="hidden" onchange="previewShieldUpload(event)">
+          </label>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="closeModal('modal-team')" class="flex-1 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl font-medium text-sm text-slate-300">Cancelar</button>
+        <button onclick="saveTeamChanges()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-sm">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL: ADD/EDIT CLASIFICATION TEAM -->
+  <div id="modal-clas-team" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 max-w-xs w-full shadow-2xl text-white">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
+        <h3 id="modal-clas-team-title" class="text-base font-bold font-display text-indigo-400">Añadir Equipo</h3>
+        <button onclick="closeModal('modal-clas-team')" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <input type="hidden" id="input-clas-team-id">
+
+      <div class="mb-3">
+        <label class="block text-xs uppercase font-bold text-slate-400 mb-1">Nombre</label>
+        <input type="text" id="input-clas-team-name" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" placeholder="Nombre del equipo">
+      </div>
+
+      <div class="grid grid-cols-4 gap-1.5 mb-3">
+        <div>
+          <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1 text-center">PG</label>
+          <input type="number" id="input-clas-team-wins" min="0" value="0" oninput="updateCalculatedPts()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-1.5 py-1.5 text-xs text-white text-center font-bold focus:outline-none focus:border-indigo-500" title="Partidos Ganados (2 pts)">
+        </div>
+        <div>
+          <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1 text-center">PE</label>
+          <input type="number" id="input-clas-team-draws" min="0" value="0" oninput="updateCalculatedPts()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-1.5 py-1.5 text-xs text-white text-center font-bold focus:outline-none focus:border-indigo-500" title="Partidos Empatados (1 pt)">
+        </div>
+        <div>
+          <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1 text-center">PP</label>
+          <input type="number" id="input-clas-team-losses" min="0" value="0" oninput="updateCalculatedPts()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-1.5 py-1.5 text-xs text-white text-center font-bold focus:outline-none focus:border-indigo-500" title="Partidos Perdidos (0 pts)">
+        </div>
+        <div>
+          <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1 text-center">Pts</label>
+          <input type="number" id="input-clas-team-pts" readonly value="0" class="w-full bg-slate-950/80 border border-slate-700/60 rounded-xl px-1.5 py-1.5 text-xs text-amber-400 text-center font-bold focus:outline-none cursor-not-allowed opacity-90" title="Puntos calculados (2*PG + 1*PE)">
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-xs uppercase font-bold text-slate-400 mb-1">Escudo / Logo</label>
+        <div class="flex items-center gap-2">
+          <img id="modal-clas-shield-preview" class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 object-contain p-0.5">
+          <label class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs py-2 px-2 rounded-xl cursor-pointer text-center transition">
+            <span>Subir foto</span>
+            <input type="file" id="input-clas-team-shield" accept="image/*" class="hidden" onchange="previewClasShieldUpload(event)">
+          </label>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="closeModal('modal-clas-team')" class="flex-1 bg-slate-800 hover:bg-slate-700 py-2 rounded-xl text-xs text-slate-300">Cancelar</button>
+        <button onclick="saveClasTeam()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 font-bold py-2 rounded-xl text-xs text-white">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL: ADJUST TIMER (INCLUDES RESTART TIMER BUTTON) -->
+  <div id="modal-timer" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-xs w-full shadow-2xl text-white">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
+        <h3 class="text-lg font-bold font-display text-amber-400">Ajustar Temporizador</h3>
+        <button onclick="closeModal('modal-timer')" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- RESTART TIMER BUTTON -->
+      <button onclick="resetTimerToInitial()" class="w-full mb-3 bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 border border-rose-500/40 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shadow-md">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span>Reiniciar temporizador a lo último puesto</span>
+      </button>
+
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label class="block text-xs uppercase font-bold text-slate-400 mb-1 text-center">Minutos</label>
+          <input type="number" id="input-timer-min" min="0" max="99" value="30" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-3 py-2.5 text-center text-2xl font-score text-amber-400 font-bold focus:outline-none focus:border-amber-500">
+        </div>
+        <div>
+          <label class="block text-xs uppercase font-bold text-slate-400 mb-1 text-center">Segundos</label>
+          <input type="number" id="input-timer-sec" min="0" max="59" value="00" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-3 py-2.5 text-center text-2xl font-score text-amber-400 font-bold focus:outline-none focus:border-amber-500">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 mb-3 border-t border-slate-800 pt-3">
+        <div>
+          <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1 text-center">Parte Actual</label>
+          <input type="number" id="input-timer-period" min="1" max="10" value="1" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2 py-1.5 text-center text-sm font-bold text-amber-400 focus:outline-none focus:border-amber-500">
+        </div>
+        <div>
+          <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1 text-center">Total Partes</label>
+          <input type="number" id="input-timer-max-periods" min="1" max="10" value="2" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2 py-1.5 text-center text-sm font-bold text-amber-400 focus:outline-none focus:border-amber-500">
+        </div>
+      </div>
+
+      <div class="flex gap-2 mb-4">
+        <button onclick="setQuickTime(30, 0)" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs py-1.5 rounded-lg text-slate-300 font-medium">30 min</button>
+        <button onclick="setQuickTime(25, 0)" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs py-1.5 rounded-lg text-slate-300 font-medium">25 min</button>
+        <button onclick="setQuickTime(20, 0)" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs py-1.5 rounded-lg text-slate-300 font-medium">20 min</button>
+        <button onclick="setQuickTime(5, 0)" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs py-1.5 rounded-lg text-slate-300 font-medium">5 min</button>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="closeModal('modal-timer')" class="flex-1 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl font-medium text-sm text-slate-300">Cancelar</button>
+        <button onclick="saveTimerSettings()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-sm">Aplicar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL: CONFIRM ACTION / DIALOG -->
+  <div id="modal-confirm" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-xs w-full shadow-2xl text-center text-white">
+      <div class="w-12 h-12 bg-rose-500/10 text-rose-400 rounded-full flex items-center justify-center mx-auto mb-3">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <h3 id="confirm-title" class="text-lg font-bold mb-1">¿Reiniciar marcador?</h3>
+      <p id="confirm-msg" class="text-xs text-slate-400 mb-4">Se pondrán los goles a 0 y el temporizador volverá al inicio.</p>
+      
+      <div class="flex gap-2">
+        <button onclick="closeModal('modal-confirm')" class="flex-1 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl font-medium text-sm text-slate-300">Cancelar</button>
+        <button id="confirm-btn-action" class="flex-1 bg-rose-600 hover:bg-rose-500 font-bold py-2.5 rounded-xl text-sm text-white">Sí, reiniciar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- TOAST NOTIFICATION BADGE -->
+  <div id="toast" class="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 bg-slate-800 border border-slate-700 text-white px-4 py-2 rounded-full text-xs font-medium shadow-xl opacity-0 pointer-events-none transition-opacity duration-300 flex items-center gap-2">
+    <span id="toast-message">Mensaje</span>
+  </div>
+
+  <script>
+    /* APP STATE */
+    const defaultShieldLeft = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23ffffff' opacity='0.2'/><path d='M50 15 L80 30 L80 65 L50 90 L20 65 L20 30 Z' fill='%23ffffff' opacity='0.9'/><text x='50' y='62' font-size='32' text-anchor='middle' font-weight='bold' fill='%23000'>C</text></svg>";
+    const defaultShieldRight = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23ffffff' opacity='0.2'/><path d='M50 15 L80 30 L80 65 L50 90 L20 65 L20 30 Z' fill='%23ffffff' opacity='0.9'/><text x='50' y='62' font-size='32' text-anchor='middle' font-weight='bold' fill='%23000'>V</text></svg>";
+
+    let state = {
+      isLocked: false,
+      left: {
+        name: 'Coslada', // Fixed default left team name
+        score: 0,
+        color: '#dc2626',
+        shield: defaultShieldLeft
+      },
+      right: {
+        name: 'VISITANTE',
+        score: 0,
+        color: '#2563eb',
+        shield: defaultShieldRight
+      },
+      timer: {
+        totalSeconds: 1800, // 30 min default
+        remainingSeconds: 1800,
+        currentPeriod: 1,
+        maxPeriods: 2,
+        isRunning: false,
+        intervalId: null
+      },
+      player: {
+        name: 'Yaiza',
+        goals: 0,
+        assists: 0
+      },
+      goalTimeline: [],
+      classification: [],
+      pastLeagues: [],
+      editingTeam: 'left',
+      selectedColorTemp: '#dc2626',
+      tempShieldData: null,
+      tempClasShieldData: null,
+      selectedPastLeague: null,
+      currentPastLeagueTab: 'stats'
+    };
+
+    /* INITIALIZATION */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSavedState();
+      renderUI();
+      renderPlayerUI();
+      
+      window.addEventListener('beforeunload', saveStateToLocalStorage);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          saveStateToLocalStorage();
+        }
+      });
+    });
+
+    /* RENDER CORE UI */
+    function renderUI() {
+      // Left Team (Coslada)
+      document.getElementById('team-left-name').innerText = state.left.name || 'Coslada';
+      document.getElementById('team-left-score').innerText = state.left.score;
+      document.getElementById('team-left-bg').style.backgroundColor = state.left.color;
+      document.getElementById('team-left-shield').src = state.left.shield || defaultShieldLeft;
+
+      // Right Team
+      document.getElementById('team-right-name').innerText = state.right.name;
+      document.getElementById('team-right-score').innerText = state.right.score;
+      document.getElementById('team-right-bg').style.backgroundColor = state.right.color;
+      document.getElementById('team-right-shield').src = state.right.shield || defaultShieldRight;
+
+      // Timer & Lock
+      updateTimerDisplay();
+      updateLockUI();
+    }
+
+    /* PLAYER GOALS & ASSISTS CONTROLS */
+    function renderPlayerUI() {
+      document.getElementById('player-name-display').innerText = state.player.name || 'Yaiza';
+      document.getElementById('player-goals-display').innerText = state.player.goals || 0;
+      document.getElementById('player-assists-display').innerText = state.player.assists || 0;
+    }
+
+    function changePlayerStat(stat, delta) {
+      if (!state.player[stat]) state.player[stat] = 0;
+      state.player[stat] = Math.max(0, state.player[stat] + delta);
+      renderPlayerUI();
+      saveStateToLocalStorage();
+    }
+
+    function openPlayerNameModal() {
+      document.getElementById('input-player-name-only').value = state.player.name || 'Yaiza';
+      openModal('modal-player-name');
+    }
+
+    function savePlayerNameOnly() {
+      const name = document.getElementById('input-player-name-only').value.trim();
+      state.player.name = name || 'Yaiza';
+      renderPlayerUI();
+      closeModal('modal-player-name');
+      saveStateToLocalStorage();
+      showToast("✅ Nombre de jugadora actualizado");
+    }
+
+    /* GOAL LOGGING & CHRONOLOGY TIMELINE */
+    function handleHalfClick(team, event) {
+      if (state.isLocked) {
+        showToast("🔒 Marcador bloqueado");
+        return;
+      }
+
+      if (team === 'left') {
+        state.left.score++;
+      } else if (team === 'right') {
+        state.right.score++;
+      }
+
+      // Record goal in timeline
+      recordGoalTimeline(team);
+
+      renderUI();
+      saveStateToLocalStorage();
+    }
+
+    function decrementGoal(team, event) {
+      event.stopPropagation();
+      if (state.isLocked) return;
+
+      if (team === 'left' && state.left.score > 0) {
+        state.left.score--;
+        removeLastGoalTimeline('left');
+      } else if (team === 'right' && state.right.score > 0) {
+        state.right.score--;
+        removeLastGoalTimeline('right');
+      }
+
+      renderUI();
+      saveStateToLocalStorage();
+    }
+
+    function recordGoalTimeline(team) {
+      if (!state.goalTimeline) state.goalTimeline = [];
+      
+      const elapsedSec = state.timer.totalSeconds - state.timer.remainingSeconds;
+      const m = Math.floor(elapsedSec / 60);
+      const s = elapsedSec % 60;
+      const formattedTime = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+      state.goalTimeline.push({
+        id: Date.now() + Math.random(),
+        team: team,
+        teamName: state[team].name,
+        period: state.timer.currentPeriod || 1,
+        time: formattedTime,
+        scoreAfter: `${state.left.score} - ${state.right.score}`
+      });
+    }
+
+    function removeLastGoalTimeline(team) {
+      if (!state.goalTimeline) return;
+      for (let i = state.goalTimeline.length - 1; i >= 0; i--) {
+        if (state.goalTimeline[i].team === team) {
+          state.goalTimeline.splice(i, 1);
+          break;
+        }
+      }
+    }
+
+    /* LOCK / UNLOCK SYSTEM */
+    function toggleLock() {
+      state.isLocked = !state.isLocked;
+      updateLockUI();
+      showToast(state.isLocked ? "🔒 Marcador bloqueado" : "🔓 Marcador desbloqueado");
+    }
+
+    function updateLockUI() {
+      const lockedIcon = document.getElementById('icon-locked');
+      const unlockedIcon = document.getElementById('icon-unlocked');
+      const lockBanner = document.getElementById('lock-banner');
+      const lockBtn = document.getElementById('btn-lock');
+
+      if (state.isLocked) {
+        lockedIcon.classList.remove('hidden');
+        unlockedIcon.classList.add('hidden');
+        lockBanner.classList.remove('hidden');
+        lockBtn.classList.add('border-amber-500', 'bg-amber-500/10');
+      } else {
+        lockedIcon.classList.add('hidden');
+        unlockedIcon.classList.remove('hidden');
+        lockBanner.classList.add('hidden');
+        lockBtn.classList.remove('border-amber-500', 'bg-amber-500/10');
+      }
+    }
+
+    /* TIMER SYSTEM */
+    function toggleTimer() {
+      if (state.timer.isRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    function startTimer() {
+      if (state.timer.remainingSeconds <= 0) return;
+
+      state.timer.isRunning = true;
+      document.getElementById('icon-timer-play').classList.add('hidden');
+      document.getElementById('icon-timer-pause').classList.remove('hidden');
+
+      state.timer.intervalId = setInterval(() => {
+        if (state.timer.remainingSeconds > 0) {
+          state.timer.remainingSeconds--;
+          updateTimerDisplay();
+          if (state.timer.remainingSeconds % 5 === 0) saveStateToLocalStorage();
+        } else {
+          pauseTimer();
+          saveStateToLocalStorage();
+          showToast("⏱️ ¡Fin del tiempo!");
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      state.timer.isRunning = false;
+      clearInterval(state.timer.intervalId);
+      document.getElementById('icon-timer-play').classList.remove('hidden');
+      document.getElementById('icon-timer-pause').classList.add('hidden');
+      saveStateToLocalStorage();
+    }
+
+    function updateTimerDisplay() {
+      const m = Math.floor(state.timer.remainingSeconds / 60);
+      const s = state.timer.remainingSeconds % 60;
+      document.getElementById('timer-display').innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+      const currentP = state.timer.currentPeriod || 1;
+      const maxP = state.timer.maxPeriods || 2;
+      document.getElementById('period-display').innerText = `${currentP}/${maxP}`;
+    }
+
+    function incrementPeriod() {
+      if (!state.timer.currentPeriod) state.timer.currentPeriod = 1;
+      if (!state.timer.maxPeriods) state.timer.maxPeriods = 2;
+
+      state.timer.currentPeriod++;
+      if (state.timer.currentPeriod > state.timer.maxPeriods) {
+        state.timer.currentPeriod = 1;
+      }
+
+      updateTimerDisplay();
+      saveStateToLocalStorage();
+      showToast(`⏱️ Tiempo: ${state.timer.currentPeriod}/${state.timer.maxPeriods}`);
+    }
+
+    function openTimerModal() {
+      pauseTimer();
+      const m = Math.floor(state.timer.remainingSeconds / 60);
+      const s = state.timer.remainingSeconds % 60;
+      document.getElementById('input-timer-min').value = m;
+      document.getElementById('input-timer-sec').value = s;
+      document.getElementById('input-timer-period').value = state.timer.currentPeriod || 1;
+      document.getElementById('input-timer-max-periods').value = state.timer.maxPeriods || 2;
+      openModal('modal-timer');
+    }
+
+    function resetTimerToInitial() {
+      pauseTimer();
+      state.timer.remainingSeconds = state.timer.totalSeconds || 1800;
+      const m = Math.floor(state.timer.remainingSeconds / 60);
+      const s = state.timer.remainingSeconds % 60;
+      document.getElementById('input-timer-min').value = m;
+      document.getElementById('input-timer-sec').value = s;
+      updateTimerDisplay();
+      saveStateToLocalStorage();
+      showToast("⏱️ Temporizador reiniciado al valor puesto");
+    }
+
+    function saveTimerSettings() {
+      const m = parseInt(document.getElementById('input-timer-min').value) || 0;
+      const s = parseInt(document.getElementById('input-timer-sec').value) || 0;
+      const p = parseInt(document.getElementById('input-timer-period').value) || 1;
+      const maxP = parseInt(document.getElementById('input-timer-max-periods').value) || 2;
+
+      const total = (m * 60) + s;
+      state.timer.totalSeconds = total;
+      state.timer.remainingSeconds = total;
+      state.timer.currentPeriod = Math.max(1, p);
+      state.timer.maxPeriods = Math.max(1, maxP);
+
+      updateTimerDisplay();
+      closeModal('modal-timer');
+      saveStateToLocalStorage();
+      showToast("⏱️ Tiempo actualizado");
+    }
+
+    function setQuickTime(min, sec) {
+      document.getElementById('input-timer-min').value = min;
+      document.getElementById('input-timer-sec').value = sec;
+    }
+
+    /* MAIN MENU MODALS & ACTIONS */
+    function openMenuModal() {
+      openModal('modal-menu');
+    }
+
+    /* MATCH HISTORY & TIMELINE VIEW */
+    function saveCurrentMatch() {
+      let matches = getSavedMatchesList();
+
+      const newMatch = {
+        id: Date.now(),
+        date: new Date().toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }),
+        leftName: state.left.name,
+        leftScore: state.left.score,
+        leftColor: state.left.color,
+        leftShield: state.left.shield,
+        rightName: state.right.name,
+        rightScore: state.right.score,
+        rightColor: state.right.color,
+        rightShield: state.right.shield,
+        playerName: state.player.name || 'Yaiza',
+        playerGoals: state.player.goals || 0,
+        playerAssists: state.player.assists || 0,
+        goalTimeline: state.goalTimeline || []
+      };
+
+      matches.unshift(newMatch);
+      try {
+        localStorage.setItem('handball_saved_matches', JSON.stringify(matches));
+        showToast("💾 Partido guardado correctamente");
+      } catch (e) {
+        showToast("⚠️ Memoria llena. Borra partidos antiguos.");
+      }
+    }
+
+    function getSavedMatchesList() {
+      const savedMatchesStr = localStorage.getItem('handball_saved_matches');
+      if (savedMatchesStr) {
+        try { return JSON.parse(savedMatchesStr); } catch (e) {}
+      }
+      return [];
+    }
+
+    function openMatchesModal() {
+      renderMatchesList();
+      openModal('modal-matches');
+    }
+
+    function renderMatchesList() {
+      const container = document.getElementById('matches-list');
+      const matches = getSavedMatchesList();
+
+      if (matches.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-slate-500">
+            <svg class="w-10 h-10 mx-auto mb-2 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            <p class="text-xs">No hay partidos guardados todavía.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = matches.map(match => `
+        <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-2.5 shadow-md flex flex-col gap-2">
+          
+          <div class="flex items-center justify-between text-xs w-full gap-1">
+            <!-- Left Team -->
+            <div class="flex items-center gap-1.5 flex-1 min-w-0">
+              <img src="${match.leftShield || defaultShieldLeft}" class="w-6 h-6 object-contain rounded-full bg-slate-900 border border-slate-700 p-0.5 shrink-0">
+              <span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${match.leftColor}"></span>
+              <span class="font-bold truncate text-[11px] sm:text-xs text-slate-100">${match.leftName}</span>
+            </div>
+
+            <!-- Score -->
+            <div class="px-2 py-0.5 bg-slate-900 rounded-xl font-score text-lg font-bold text-amber-400 tracking-wider shrink-0 border border-slate-700">
+              ${match.leftScore} - ${match.rightScore}
+            </div>
+
+            <!-- Right Team -->
+            <div class="flex items-center gap-1.5 flex-1 justify-end min-w-0">
+              <span class="font-bold truncate text-[11px] sm:text-xs text-slate-100 text-right">${match.rightName}</span>
+              <span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${match.rightColor}"></span>
+              <img src="${match.rightShield || defaultShieldRight}" class="w-6 h-6 object-contain rounded-full bg-slate-900 border border-slate-700 p-0.5 shrink-0">
+            </div>
+          </div>
+
+          <!-- Subtitle: Player Stats + Date + View Timeline Button -->
+          <div class="flex items-center justify-between pt-1.5 border-t border-slate-700/50 text-[11px]">
+            <div class="text-amber-400/90 font-medium">
+              ⚽ ${match.playerName || 'Jugadora'}: <span class="font-bold text-white">${match.playerGoals ?? 0}</span> g | <span class="font-bold text-cyan-300">${match.playerAssists ?? 0}</span> a
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="viewMatchTimeline(${match.id})" class="text-xs bg-slate-700 hover:bg-slate-600 px-2 py-0.5 rounded-lg text-amber-300 font-bold flex items-center gap-1 transition">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Cronología</span>
+              </button>
+              <button onclick="deleteMatch(${match.id})" class="text-rose-400 hover:text-rose-300 p-0.5" title="Eliminar partido">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      `).join('');
+    }
+
+    function viewMatchTimeline(matchId) {
+      const matches = getSavedMatchesList();
+      const match = matches.find(m => m.id === matchId);
+      if (!match) return;
+
+      document.getElementById('timeline-match-header').innerHTML = `
+        <div class="font-bold text-amber-400 text-sm">${match.leftName} ${match.leftScore} - ${match.rightScore} ${match.rightName}</div>
+        <div class="text-[10px] text-slate-400 mt-0.5">${match.date} | 👤 ${match.playerName}: ${match.playerGoals}g, ${match.playerAssists}a</div>
+      `;
+
+      const container = document.getElementById('timeline-events-container');
+      const timeline = match.goalTimeline || [];
+
+      if (timeline.length === 0) {
+        container.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">No hay datos de cronología de goles para este partido.</div>`;
+      } else {
+        container.innerHTML = timeline.map((event, idx) => `
+          <div class="flex items-center gap-2 p-2 rounded-xl text-xs ${event.team === 'left' ? 'bg-rose-950/40 border border-rose-800/40' : 'bg-blue-950/40 border border-blue-800/40'}">
+            <span class="font-bold font-score text-slate-400 text-sm w-5 text-center">#${idx + 1}</span>
+            <div class="flex-1">
+              <div class="font-bold text-slate-200">${event.teamName}</div>
+              <div class="text-[10px] text-slate-400">Parte ${event.period} • Minuto ${event.time}</div>
+            </div>
+            <span class="font-score text-amber-400 font-bold text-base px-2 py-0.5 bg-slate-900 rounded-lg border border-slate-700">${event.scoreAfter || ''}</span>
+          </div>
+        `).join('');
+      }
+
+      openModal('modal-match-timeline');
+    }
+
+    function deleteMatch(id) {
+      let matches = getSavedMatchesList().filter(m => m.id !== id);
+      localStorage.setItem('handball_saved_matches', JSON.stringify(matches));
+      renderMatchesList();
+      showToast("🗑️ Partido eliminado");
+    }
+
+    function clearAllMatches() {
+      if (confirm("¿Seguro que quieres borrar todo el historial de partidos?")) {
+        localStorage.removeItem('handball_saved_matches');
+        renderMatchesList();
+        showToast("🗑️ Historial borrado");
+      }
+    }
+
+    /* CLASSIFICATION LOGIC (2 PTS FOR WIN) */
+    function openClassificationModal() {
+      renderClassificationTable();
+      openModal('modal-classification');
+    }
+
+    function renderClassificationTable() {
+      const tbody = document.getElementById('classification-table-body');
+      
+      state.classification.forEach(team => {
+        team.pts = ((parseInt(team.wins) || 0) * 2) + ((parseInt(team.draws) || 0) * 1);
+      });
+
+      state.classification.sort((a, b) => {
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        return (b.wins || 0) - (a.wins || 0);
+      });
+
+      if (state.classification.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="text-center py-6 text-slate-500 text-xs">
+              No hay equipos en la clasificación. Haz clic en "Añadir Equipo".
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = state.classification.map((team, index) => `
+        <tr class="hover:bg-slate-800/40">
+          <td class="py-2 px-1 text-center font-bold text-slate-400">${index + 1}</td>
+          <td class="py-2 px-2 flex items-center gap-2 min-w-0">
+            <img src="${team.shield || defaultShieldLeft}" class="w-5 h-5 object-contain rounded-full bg-slate-800 border border-slate-700 shrink-0">
+            <span class="truncate font-bold text-slate-200 text-xs">${team.name}</span>
+          </td>
+          <td class="py-2 px-1 text-center text-slate-300 font-medium">${team.wins || 0}</td>
+          <td class="py-2 px-1 text-center text-slate-400 font-medium">${team.draws || 0}</td>
+          <td class="py-2 px-1 text-center text-slate-400 font-medium">${team.losses || 0}</td>
+          <td class="py-2 px-1 text-center font-bold text-amber-400 text-sm">${team.pts || 0}</td>
+          <td class="py-2 px-1 text-center">
+            <div class="flex items-center justify-center gap-1">
+              <button onclick="editClasTeam('${team.id}')" class="p-1 text-indigo-400 hover:text-indigo-300" title="Editar">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+              </button>
+              <button onclick="deleteClasTeam('${team.id}')" class="p-1 text-rose-400 hover:text-rose-300" title="Eliminar">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function updateCalculatedPts() {
+      const wins = parseInt(document.getElementById('input-clas-team-wins').value) || 0;
+      const draws = parseInt(document.getElementById('input-clas-team-draws').value) || 0;
+      const pts = (wins * 2) + (draws * 1);
+      document.getElementById('input-clas-team-pts').value = pts;
+    }
+
+    function openAddClasTeamModal() {
+      document.getElementById('modal-clas-team-title').innerText = "Añadir Equipo";
+      document.getElementById('input-clas-team-id').value = '';
+      document.getElementById('input-clas-team-name').value = '';
+      document.getElementById('input-clas-team-wins').value = '0';
+      document.getElementById('input-clas-team-draws').value = '0';
+      document.getElementById('input-clas-team-losses').value = '0';
+      document.getElementById('modal-clas-shield-preview').src = defaultShieldLeft;
+      state.tempClasShieldData = defaultShieldLeft;
+      updateCalculatedPts();
+      openModal('modal-clas-team');
+    }
+
+    function editClasTeam(id) {
+      const team = state.classification.find(t => t.id === id);
+      if (!team) return;
+
+      document.getElementById('modal-clas-team-title').innerText = "Editar Equipo";
+      document.getElementById('input-clas-team-id').value = team.id;
+      document.getElementById('input-clas-team-name').value = team.name;
+      document.getElementById('input-clas-team-wins').value = team.wins || 0;
+      document.getElementById('input-clas-team-draws').value = team.draws || 0;
+      document.getElementById('input-clas-team-losses').value = team.losses || 0;
+      document.getElementById('modal-clas-shield-preview').src = team.shield || defaultShieldLeft;
+      state.tempClasShieldData = team.shield || defaultShieldLeft;
+      updateCalculatedPts();
+      openModal('modal-clas-team');
+    }
+
+    function previewClasShieldUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxDim = 128;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const resizedDataUrl = canvas.toDataURL('image/png', 0.8);
+          state.tempClasShieldData = resizedDataUrl;
+          document.getElementById('modal-clas-shield-preview').src = resizedDataUrl;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function saveClasTeam() {
+      const id = document.getElementById('input-clas-team-id').value;
+      const name = document.getElementById('input-clas-team-name').value.trim() || 'Equipo';
+      const wins = parseInt(document.getElementById('input-clas-team-wins').value) || 0;
+      const draws = parseInt(document.getElementById('input-clas-team-draws').value) || 0;
+      const losses = parseInt(document.getElementById('input-clas-team-losses').value) || 0;
+      const pts = (wins * 2) + (draws * 1);
+
+      if (id) {
+        const team = state.classification.find(t => t.id === id);
+        if (team) {
+          team.name = name;
+          team.wins = wins;
+          team.draws = draws;
+          team.losses = losses;
+          team.pts = pts;
+          if (state.tempClasShieldData) team.shield = state.tempClasShieldData;
+        }
+      } else {
+        state.classification.push({
+          id: 'clas_' + Date.now(),
+          name: name,
+          wins: wins,
+          draws: draws,
+          losses: losses,
+          pts: pts,
+          shield: state.tempClasShieldData || defaultShieldLeft
+        });
+      }
+
+      renderClassificationTable();
+      closeModal('modal-clas-team');
+      saveStateToLocalStorage();
+      showToast("🏆 Clasificación actualizada");
+    }
+
+    function deleteClasTeam(id) {
+      if (confirm("¿Seguro que deseas eliminar este equipo?")) {
+        state.classification = state.classification.filter(t => t.id !== id);
+        renderClassificationTable();
+        saveStateToLocalStorage();
+        showToast("🗑️ Equipo eliminado");
+      }
+    }
+
+    /* STATISTICAL CALCULATIONS */
+    function calculateCurrentStats(matchesList = null) {
+      const matches = matchesList || getSavedMatchesList();
+      const totalMatches = matches.length;
+
+      let totalGroupGoalsFor = 0;
+      let totalGroupGoalsAgainst = 0;
+      let totalPlayerGoals = 0;
+      let totalPlayerAssists = 0;
+
+      matches.forEach(m => {
+        totalGroupGoalsFor += (m.leftScore || 0);
+        totalGroupGoalsAgainst += (m.rightScore || 0);
+        totalPlayerGoals += (m.playerGoals || 0);
+        totalPlayerAssists += (m.playerAssists || 0);
+      });
+
+      const avgGroupFor = totalMatches > 0 ? (totalGroupGoalsFor / totalMatches).toFixed(1) : '0.0';
+      const avgGroupAgainst = totalMatches > 0 ? (totalGroupGoalsAgainst / totalMatches).toFixed(1) : '0.0';
+      const diffGroup = totalGroupGoalsFor - totalGroupGoalsAgainst;
+
+      const avgPlayerGoals = totalMatches > 0 ? (totalPlayerGoals / totalMatches).toFixed(1) : '0.0';
+      const avgPlayerAssists = totalMatches > 0 ? (totalPlayerAssists / totalMatches).toFixed(1) : '0.0';
+
+      return {
+        totalMatches,
+        totalGroupGoalsFor,
+        totalGroupGoalsAgainst,
+        avgGroupFor,
+        avgGroupAgainst,
+        diffGroup,
+        totalPlayerGoals,
+        totalPlayerAssists,
+        avgPlayerGoals,
+        avgPlayerAssists,
+        playerName: state.player.name || 'Yaiza'
+      };
+    }
+
+    function openStatsModal() {
+      const stats = calculateCurrentStats();
+
+      document.getElementById('stat-group-goals-for').innerText = stats.totalGroupGoalsFor;
+      document.getElementById('stat-group-goals-against').innerText = stats.totalGroupGoalsAgainst;
+      document.getElementById('stat-group-avg-for').innerText = stats.avgGroupFor;
+      document.getElementById('stat-group-avg-against').innerText = stats.avgGroupAgainst;
+      document.getElementById('stat-group-diff').innerText = (stats.diffGroup > 0 ? '+' : '') + stats.diffGroup;
+
+      document.getElementById('stat-player-name-title').innerText = stats.playerName;
+      document.getElementById('stat-indiv-goals').innerText = stats.totalPlayerGoals;
+      document.getElementById('stat-indiv-assists').innerText = stats.totalPlayerAssists;
+      document.getElementById('stat-indiv-avg-goals').innerText = stats.avgPlayerGoals;
+      document.getElementById('stat-indiv-avg-assists').innerText = stats.avgPlayerAssists;
+
+      openModal('modal-stats');
+    }
+
+    /* LEAGUES ARCHIVING SYSTEM */
+    function openLeaguesMenuModal() {
+      openModal('modal-leagues-menu');
+    }
+
+    function openSaveLeaguePrompt() {
+      document.getElementById('input-league-name').value = `Liga ${new Date().getFullYear()}`;
+      openModal('modal-save-league-prompt');
+    }
+
+    function confirmSaveLeague() {
+      const leagueName = document.getElementById('input-league-name').value.trim() || `Liga ${new Date().getFullYear()}`;
+      const matches = getSavedMatchesList();
+      const stats = calculateCurrentStats(matches);
+
+      const newLeagueArchive = {
+        id: 'league_' + Date.now(),
+        name: leagueName,
+        dateSaved: new Date().toLocaleDateString('es-ES'),
+        matches: matches,
+        classification: [...state.classification],
+        stats: stats
+      };
+
+      let pastLeagues = getPastLeaguesList();
+      pastLeagues.unshift(newLeagueArchive);
+
+      try {
+        localStorage.setItem('handball_past_leagues', JSON.stringify(pastLeagues));
+
+        localStorage.removeItem('handball_saved_matches');
+        state.classification = [];
+        state.left.score = 0;
+        state.right.score = 0;
+        state.player.goals = 0;
+        state.player.assists = 0;
+        state.goalTimeline = [];
+        
+        saveStateToLocalStorage();
+        renderUI();
+        renderPlayerUI();
+
+        closeModal('modal-save-league-prompt');
+        showToast("🏆 Liga archivada y restablecida con éxito");
+      } catch (e) {
+        showToast("⚠️ Error guardando la liga en memoria.");
+      }
+    }
+
+    function getPastLeaguesList() {
+      const str = localStorage.getItem('handball_past_leagues');
+      if (str) {
+        try { return JSON.parse(str); } catch(e) {}
+      }
+      return [];
+    }
+
+    function openPastLeaguesModal() {
+      renderPastLeaguesList();
+      openModal('modal-past-leagues');
+    }
+
+    function renderPastLeaguesList() {
+      const container = document.getElementById('past-leagues-list');
+      const pastLeagues = getPastLeaguesList();
+
+      if (pastLeagues.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs">No hay ligas anteriores guardadas.</div>`;
+        return;
+      }
+
+      container.innerHTML = pastLeagues.map(league => `
+        <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-md">
+          <div class="flex-1 cursor-pointer" onclick="viewPastLeagueDetails('${league.id}')">
+            <div class="font-bold text-amber-400 text-sm truncate">${league.name}</div>
+            <div class="text-[10px] text-slate-400">${league.dateSaved} • ${league.matches ? league.matches.length : 0} partidos guardados</div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="viewPastLeagueDetails('${league.id}')" class="bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold px-2.5 py-1 rounded-xl text-xs hover:bg-amber-500/30">
+              Ver
+            </button>
+            <button onclick="deletePastLeague('${league.id}')" class="text-rose-400 hover:text-rose-300 p-1" title="Eliminar liga">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deletePastLeague(id) {
+      if (confirm("¿Seguro que quieres eliminar esta liga antigua?")) {
+        let pastLeagues = getPastLeaguesList().filter(l => l.id !== id);
+        localStorage.setItem('handball_past_leagues', JSON.stringify(pastLeagues));
+        renderPastLeaguesList();
+        showToast("🗑️ Liga eliminada");
+      }
+    }
+
+    function viewPastLeagueDetails(leagueId) {
+      const pastLeagues = getPastLeaguesList();
+      const league = pastLeagues.find(l => l.id === leagueId);
+      if (!league) return;
+
+      state.selectedPastLeague = league;
+      document.getElementById('past-league-title').innerText = league.name;
+      switchPastLeagueTab('stats');
+      openModal('modal-past-league-detail');
+    }
+
+    function switchPastLeagueTab(tab) {
+      state.currentPastLeagueTab = tab;
+      const league = state.selectedPastLeague;
+      if (!league) return;
+
+      document.getElementById('tab-past-stats-btn').className = tab === 'stats' ? 'flex-1 py-2 text-center border-b-2 border-amber-400 text-amber-400' : 'flex-1 py-2 text-center text-slate-400 border-b-2 border-transparent';
+      document.getElementById('tab-past-clas-btn').className = tab === 'clas' ? 'flex-1 py-2 text-center border-b-2 border-amber-400 text-amber-400' : 'flex-1 py-2 text-center text-slate-400 border-b-2 border-transparent';
+      document.getElementById('tab-past-matches-btn').className = tab === 'matches' ? 'flex-1 py-2 text-center border-b-2 border-amber-400 text-amber-400' : 'flex-1 py-2 text-center text-slate-400 border-b-2 border-transparent';
+
+      const content = document.getElementById('past-league-tab-content');
+
+      if (tab === 'stats') {
+        const stats = league.stats || calculateCurrentStats(league.matches || []);
+        content.innerHTML = `
+          <div class="space-y-3 text-xs">
+            <div class="bg-slate-800/80 p-3 rounded-2xl border border-slate-700">
+              <div class="font-bold text-emerald-400 mb-2">⚽ Estadísticas Grupales</div>
+              <div class="grid grid-cols-2 gap-2 text-[11px]">
+                <div class="bg-slate-900 p-2 rounded-xl">Goles Favor: <b class="text-white">${stats.totalGroupGoalsFor}</b></div>
+                <div class="bg-slate-900 p-2 rounded-xl">Goles Contra: <b class="text-rose-400">${stats.totalGroupGoalsAgainst}</b></div>
+                <div class="bg-slate-900 p-2 rounded-xl">Media Favor: <b class="text-amber-400">${stats.avgGroupFor}</b></div>
+                <div class="bg-slate-900 p-2 rounded-xl">Media Contra: <b class="text-amber-400">${stats.avgGroupAgainst}</b></div>
+                <div class="col-span-2 bg-slate-900 p-2 rounded-xl">Diferencia: <b class="text-cyan-400">${stats.diffGroup}</b></div>
+              </div>
+            </div>
+
+            <div class="bg-slate-800/80 p-3 rounded-2xl border border-slate-700">
+              <div class="font-bold text-amber-400 mb-2">👤 Estadísticas Jugador (${stats.playerName || 'Jugador'})</div>
+              <div class="grid grid-cols-2 gap-2 text-[11px]">
+                <div class="bg-slate-900 p-2 rounded-xl">Goles: <b class="text-emerald-400">${stats.totalPlayerGoals}</b></div>
+                <div class="bg-slate-900 p-2 rounded-xl">Asistencias: <b class="text-cyan-400">${stats.totalPlayerAssists}</b></div>
+                <div class="bg-slate-900 p-2 rounded-xl">Media Goles: <b class="text-amber-400">${stats.avgPlayerGoals}</b></div>
+                <div class="bg-slate-900 p-2 rounded-xl">Media Asis: <b class="text-amber-400">${stats.avgPlayerAssists}</b></div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (tab === 'clas') {
+        const clas = league.classification || [];
+        if (clas.length === 0) {
+          content.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">Sin datos de clasificación.</div>`;
+          return;
+        }
+
+        content.innerHTML = `
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="text-slate-400 border-b border-slate-800 text-[10px]">
+                <th class="py-1">#</th>
+                <th class="py-1">Equipo</th>
+                <th class="py-1 text-center">PG</th>
+                <th class="py-1 text-center">PE</th>
+                <th class="py-1 text-center font-bold text-amber-400">Pts</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+              ${clas.map((team, idx) => `
+                <tr>
+                  <td class="py-1.5 font-bold text-slate-400 text-[10px]">${idx + 1}</td>
+                  <td class="py-1.5 font-bold text-slate-200 truncate max-w-[120px]">${team.name}</td>
+                  <td class="py-1.5 text-center">${team.wins || 0}</td>
+                  <td class="py-1.5 text-center">${team.draws || 0}</td>
+                  <td class="py-1.5 text-center font-bold text-amber-400">${team.pts || 0}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } else if (tab === 'matches') {
+        const matches = league.matches || [];
+        if (matches.length === 0) {
+          content.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">Sin partidos guardados en esta liga.</div>`;
+          return;
+        }
+
+        content.innerHTML = matches.map(m => `
+          <div class="bg-slate-800/80 p-2 rounded-xl border border-slate-700/60 mb-2 text-xs">
+            <div class="flex items-center justify-between font-bold">
+              <span>${m.leftName} ${m.leftScore}</span>
+              <span class="text-amber-400 font-score text-base">${m.leftScore} - ${m.rightScore}</span>
+              <span>${m.rightScore} ${m.rightName}</span>
+            </div>
+            <div class="text-[10px] text-slate-400 text-center mt-0.5">${m.date} | 👤 ${m.playerName}: ${m.playerGoals}g, ${m.playerAssists}a</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    /* LOCAL STORAGE & SYNC */
+    function saveStateToLocalStorage() {
+      const activeData = {
+        left: state.left,
+        right: state.right,
+        timer: {
+          totalSeconds: state.timer.totalSeconds,
+          remainingSeconds: state.timer.remainingSeconds,
+          currentPeriod: state.timer.currentPeriod,
+          maxPeriods: state.timer.maxPeriods
+        },
+        player: state.player,
+        goalTimeline: state.goalTimeline,
+        classification: state.classification
+      };
+      try {
+        localStorage.setItem('handball_active_match', JSON.stringify(activeData));
+      } catch (e) {}
+    }
+
+    function loadSavedState() {
+      const saved = localStorage.getItem('handball_active_match');
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          if (data.left) {
+            state.left = data.left;
+            state.left.name = "Coslada"; // Force left team name to remain "Coslada"
+          }
+          if (data.right) state.right = data.right;
+          if (data.timer) {
+            state.timer.totalSeconds = data.timer.totalSeconds || 1800;
+            state.timer.remainingSeconds = data.timer.remainingSeconds || 1800;
+            state.timer.currentPeriod = data.timer.currentPeriod || 1;
+            state.timer.maxPeriods = data.timer.maxPeriods || 2;
+          }
+          if (data.player) state.player = data.player;
+          if (data.goalTimeline) state.goalTimeline = data.goalTimeline;
+          if (data.classification) state.classification = data.classification;
+        } catch (e) {}
+      }
+    }
+
+    /* TEAM EDITING LOGIC */
+    function openTeamModal(side) {
+      state.editingTeam = side;
+      const team = state[side];
+
+      const nameInput = document.getElementById('input-team-name');
+      const disabledMsg = document.getElementById('team-name-disabled-msg');
+
+      document.getElementById('modal-team-title').innerText = side === 'left' ? 'Editar Equipo Izquierdo (Coslada)' : 'Editar Equipo Derecho';
+      
+      if (side === 'left') {
+        nameInput.value = 'Coslada';
+        nameInput.disabled = true;
+        disabledMsg.classList.remove('hidden');
+      } else {
+        nameInput.value = team.name;
+        nameInput.disabled = false;
+        disabledMsg.classList.add('hidden');
+      }
+
+      document.getElementById('modal-shield-preview').src = team.shield || (side === 'left' ? defaultShieldLeft : defaultShieldRight);
+      state.tempShieldData = null;
+
+      selectColor(team.color);
+      openModal('modal-team');
+    }
+
+    function selectColor(hex) {
+      state.selectedColorTemp = hex;
+      document.querySelectorAll('.color-btn').forEach(btn => {
+        if (btn.getAttribute('data-color') === hex) {
+          btn.classList.add('ring-4', 'ring-amber-400', 'scale-110');
+          btn.classList.remove('border-transparent');
+        } else {
+          btn.classList.remove('ring-4', 'ring-amber-400', 'scale-110');
+          btn.classList.add('border-transparent');
+        }
+      });
+    }
+
+    function previewShieldUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxDim = 128;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const resizedDataUrl = canvas.toDataURL('image/png', 0.8);
+          state.tempShieldData = resizedDataUrl;
+          document.getElementById('modal-shield-preview').src = resizedDataUrl;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function saveTeamChanges() {
+      const side = state.editingTeam;
+      if (side === 'left') {
+        state.left.name = "Coslada";
+      } else {
+        const newName = document.getElementById('input-team-name').value.trim();
+        if (newName) state.right.name = newName;
+      }
+
+      if (state.selectedColorTemp) state[side].color = state.selectedColorTemp;
+      if (state.tempShieldData) state[side].shield = state.tempShieldData;
+
+      renderUI();
+      closeModal('modal-team');
+      saveStateToLocalStorage();
+      showToast("✅ Equipo actualizado");
+    }
+
+    /* RESET SCOREBOARD LOGIC */
+    function confirmReset() {
+      const actionBtn = document.getElementById('confirm-btn-action');
+      actionBtn.onclick = function() {
+        resetScoreboard();
+      };
+      openModal('modal-confirm');
+    }
+
+    function resetScoreboard() {
+      state.left.score = 0;
+      state.right.score = 0;
+      state.timer.remainingSeconds = state.timer.totalSeconds;
+      state.timer.currentPeriod = 1;
+      state.player.goals = 0;
+      state.player.assists = 0;
+      state.goalTimeline = [];
+
+      pauseTimer();
+      renderUI();
+      renderPlayerUI();
+      closeModal('modal-confirm');
+      saveStateToLocalStorage();
+      showToast("🔄 Marcador reiniciado");
+    }
+
+    /* MODAL HELPERS */
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-message').innerText = message;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2000);
+    }
+  </script>
+</body>
+</html>
